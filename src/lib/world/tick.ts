@@ -1,10 +1,12 @@
-import { flushStore, store } from "@/lib/core/store";
+import { flushStore, hydrateStore, store } from "@/lib/core/store";
 import { deriveTimeSlot, nextWeather } from "@/lib/world/clock";
 import { runVillagerTurn } from "@/lib/agents/villager-agent";
 import { planDailyHeadline } from "@/lib/agents/director-agent";
 import { generateDailyReport } from "@/lib/agents/reporter-agent";
 
 export const runWorldTick = async () => {
+  await hydrateStore();
+
   const now = new Date();
   const nowIso = now.toISOString();
 
@@ -27,7 +29,7 @@ export const runWorldTick = async () => {
   store.events = store.events.slice(0, 200);
 
   store.world.headline = await planDailyHeadline(store.world);
-  flushStore();
+  await flushStore();
 
   return {
     world: store.world,
@@ -36,9 +38,11 @@ export const runWorldTick = async () => {
 };
 
 export const runDailyReportTick = async () => {
+  await hydrateStore();
+
   const report = await generateDailyReport(store.world, store.events);
   store.reports.unshift(report);
   store.reports = store.reports.slice(0, 30);
-  flushStore();
+  await flushStore();
   return report;
 };

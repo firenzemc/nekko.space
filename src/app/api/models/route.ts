@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  ensureRuntimeOverridesLoaded,
   getModelConfig,
   getRuntimeOverrides,
   setRuntimeOverrides,
@@ -16,16 +17,19 @@ const TASKS: LlmTaskKey[] = [
 ];
 
 export async function GET() {
-  const models = TASKS.map((taskKey) => ({
-    taskKey,
-    config: getModelConfig(taskKey),
-  }));
+  await ensureRuntimeOverridesLoaded();
+  const models = await Promise.all(
+    TASKS.map(async (taskKey) => ({
+      taskKey,
+      config: await getModelConfig(taskKey),
+    }))
+  );
 
   return NextResponse.json({ models, runtimeOverrides: getRuntimeOverrides() });
 }
 
 export async function POST(request: Request) {
   const body = (await request.json()) as { overrides?: ModelOverride[] };
-  setRuntimeOverrides(body.overrides ?? []);
+  await setRuntimeOverrides(body.overrides ?? []);
   return NextResponse.json({ ok: true });
 }

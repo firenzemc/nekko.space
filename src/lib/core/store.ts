@@ -14,9 +14,6 @@ declare global {
 }
 
 const createInitialState = (): MemoryStore => {
-  const persisted = loadPersistedState();
-  if (persisted) return persisted;
-
   const now = new Date();
   return {
     world: {
@@ -38,6 +35,22 @@ if (!globalThis.__islandStore) {
   globalThis.__islandStore = store;
 }
 
-export const flushStore = () => {
-  persistState(store);
+let hydratePromise: Promise<void> | null = null;
+
+export const hydrateStore = async () => {
+  if (!hydratePromise) {
+    hydratePromise = (async () => {
+      const persisted = await loadPersistedState();
+      if (!persisted) return;
+      store.world = persisted.world;
+      store.events = persisted.events;
+      store.reports = persisted.reports;
+    })();
+  }
+
+  await hydratePromise;
+};
+
+export const flushStore = async () => {
+  await persistState(store);
 };

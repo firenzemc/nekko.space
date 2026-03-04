@@ -50,8 +50,8 @@ bun dev
 默认模型映射在 `src/lib/llm/model-registry.ts`：
 
 - `villager.dialogue` -> MiniMax M2.5（Vercel Gateway）
-- `director.daily-plan` -> AIHubMix (`gpt-4o-mini`)
-- `reporter.daily` -> AIHubMix (`gpt-4o-mini`)
+- `director.daily-plan` -> Vercel Gateway (`openai/gpt-4o-mini`)
+- `reporter.daily` -> Vercel Gateway (`openai/gpt-4o-mini`)
 
 支持三层优先级：
 
@@ -68,6 +68,7 @@ bun dev
 ## 环境变量
 
 - `CRON_SECRET`：保护 cron route
+- `DATABASE_URL`：Neon Postgres 连接串（启用持久化）
 - `AI_GATEWAY_API_KEY`：Vercel AI Gateway API Key
 - `AI_GATEWAY_BASE_URL`：默认 `https://ai-gateway.vercel.sh/v1`
 - `CUSTOM_LLM_BASE_URL`：自定义 OpenAI-compatible 基础地址
@@ -77,6 +78,17 @@ bun dev
 - `DEEPSEEK_API_KEY`：DeepSeek 调用
 - `GLM_API_KEY`：GLM 调用
 - `MODEL_OVERRIDES_JSON`：可选，初始化模型覆盖配置
+
+## 数据库（Neon + Drizzle）
+
+项目会优先使用 `DATABASE_URL` 对接 Neon 的 `kv_store` 表持久化世界状态和模型覆盖配置；若未配置，会回退到 `.data` 文件。
+
+```bash
+bun run db:push
+```
+
+- `db:push` 会根据 `src/lib/db/schema.ts` 同步表结构
+- 首次上线建议在本地或 CI 执行一次后再部署
 
 ## Vercel 定时任务
 

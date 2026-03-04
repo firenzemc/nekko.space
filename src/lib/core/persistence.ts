@@ -1,6 +1,9 @@
-import { mkdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { eq, sql } from "drizzle-orm";
 import type { DailyReport, IslandEvent, WorldState } from "@/lib/core/types";
+import { db, hasDatabase } from "@/lib/db/client";
+import { kvStore } from "@/lib/db/schema";
 import type { ModelOverride } from "@/lib/llm/types";
 
 type PersistedState = {
@@ -9,9 +12,33 @@ type PersistedState = {
   reports: DailyReport[];
 };
 
+const STATE_KEY = "island_state";
+const MODEL_OVERRIDES_KEY = "model_overrides";
+
 const DATA_DIR = join(process.cwd(), ".data");
 const STATE_FILE = join(DATA_DIR, "state.json");
 const OVERRIDES_FILE = join(DATA_DIR, "model-overrides.json");
+
+let databaseReady: Promise<boolean> | null = null;
+
+const ensureDatabase = async (): Promise<boolean> => {
+  if (!hasDatabase || !db) return false;
+
+  if (!databaseReady) {
+    databaseReady = db
+      .execute(sql`
+        create table if not exists kv_store (
+          key text primary key,
+          value jsonb not null,
+          updated_at timestamptz not null default now()
+        )
+      `)
+      .then(() => true)
+      .catch(() => false);
+  }
+
+  return databaseReady;
+};
 
 const ensureDir = () => {
   try {
@@ -23,7 +50,17 @@ const ensureDir = () => {
   }
 };
 
-export const loadPersistedState = (): PersistedState | null => {
+export const loadPersistedState = async (): Promise<PersistedState | null> => {
+  if (await ensureDatabase()) {
+    const rows = await db!
+      .select({ value: kvStore.value })
+      .from(kvStore)
+      .where(eq(kvStore.key, STATE_KEY))
+      .limit(1);
+    const value = rows[0]?.value as PersistedState | undefined;
+    if (value) return value;
+  }
+
   try {
     if (!existsSync(STATE_FILE)) return null;
     const content = readFileSync(STATE_FILE, "utf8");
@@ -34,7 +71,21 @@ export const loadPersistedState = (): PersistedState | null => {
   }
 };
 
-export const persistState = (state: PersistedState) => {
+export const persistState = async (state: PersistedState) => {
+  if (await ensureDatabase()) {
+    await db!
+      .insert(kvStore)
+      .values({ key: STATE_KEY, value: state })
+      .onConflictDoUpdate({
+        target: kvStore.key,
+        set: {
+          value: state,
+          updatedAt: sql`now()`,
+        },
+      });
+    return;
+  }
+
   try {
     ensureDir();
     writeFileSync(STATE_FILE, JSON.stringify(state, null, 2), "utf8");
@@ -43,7 +94,17 @@ export const persistState = (state: PersistedState) => {
   }
 };
 
-export const loadPersistedOverrides = (): ModelOverride[] => {
+export const loadPersistedOverrides = async (): Promise<ModelOverride[]> => {
+  if (await ensureDatabase()) {
+    const rows = await db!
+      .select({ value: kvStore.value })
+      .from(kvStore)
+      .where(eq(kvStore.key, MODEL_OVERRIDES_KEY))
+      .limit(1);
+    const value = rows[0]?.value as ModelOverride[] | undefined;
+    return Array.isArray(value) ? value : [];
+  }
+
   try {
     if (!existsSync(OVERRIDES_FILE)) return [];
     const content = readFileSync(OVERRIDES_FILE, "utf8");
@@ -54,7 +115,21 @@ export const loadPersistedOverrides = (): ModelOverride[] => {
   }
 };
 
-export const persistOverrides = (overrides: ModelOverride[]) => {
+export const persistOverrides = async (overrides: ModelOverride[]) => {
+  if (await ensureDatabase()) {
+    await db!
+      .insert(kvStore)
+      .values({ key: MODEL_OVERRIDES_KEY, value: overrides })
+      .onConflictDoUpdate({
+        target: kvStore.key,
+        set: {
+          value: overrides,
+          updatedAt: sql`now()`,
+        },
+      });
+    return;
+  }
+
   try {
     ensureDir();
     writeFileSync(OVERRIDES_FILE, JSON.stringify(overrides, null, 2), "utf8");

@@ -24,7 +24,7 @@ export const runLlmTask = async ({
   scope = "global",
   prompt,
 }: RouteOptions): Promise<LlmRouteResult> => {
-  const config = getModelConfig(taskKey, scope);
+  const config = await getModelConfig(taskKey, scope);
 
   const common = {
     model: config.model,

@@ -77,19 +77,35 @@ const parseEnvOverride = (): ModelOverride[] => {
   }
 };
 
-let runtimeOverrides: ModelOverride[] = loadPersistedOverrides();
+let runtimeOverrides: ModelOverride[] = [];
+let overridesLoaded = false;
+let overridesLoadPromise: Promise<void> | null = null;
 
-export const setRuntimeOverrides = (overrides: ModelOverride[]) => {
+export const ensureRuntimeOverridesLoaded = async () => {
+  if (overridesLoaded) return;
+  if (!overridesLoadPromise) {
+    overridesLoadPromise = (async () => {
+      runtimeOverrides = await loadPersistedOverrides();
+      overridesLoaded = true;
+    })();
+  }
+  await overridesLoadPromise;
+};
+
+export const setRuntimeOverrides = async (overrides: ModelOverride[]) => {
   runtimeOverrides = overrides;
-  persistOverrides(runtimeOverrides);
+  overridesLoaded = true;
+  await persistOverrides(runtimeOverrides);
 };
 
 export const getRuntimeOverrides = (): ModelOverride[] => runtimeOverrides;
 
-export const getModelConfig = (
+export const getModelConfig = async (
   taskKey: LlmTaskKey,
   scope: "global" | `villager:${string}` = "global"
-): ModelConfig => {
+): Promise<ModelConfig> => {
+  await ensureRuntimeOverridesLoaded();
+
   const base = DEFAULT_CONFIG[taskKey];
   const allOverrides = [...parseEnvOverride(), ...runtimeOverrides];
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { flushStore, store } from "@/lib/core/store";
+import { flushStore, hydrateStore, store } from "@/lib/core/store";
 
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
@@ -10,9 +10,11 @@ export async function GET(request: Request) {
     }
   }
 
+  await hydrateStore();
+
   const compacted = store.events.length;
   store.events = store.events.slice(0, 120);
-  flushStore();
+  await flushStore();
 
   return NextResponse.json({
     ok: true,

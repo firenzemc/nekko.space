@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { store } from "@/lib/core/store";
+import { hydrateStore, store } from "@/lib/core/store";
 
 export async function GET() {
+  await hydrateStore();
+
   return NextResponse.json({
     world: store.world,
     latestEvents: store.events.slice(0, 10),
