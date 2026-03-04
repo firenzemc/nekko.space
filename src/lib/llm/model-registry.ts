@@ -3,29 +3,29 @@ import { loadPersistedOverrides, persistOverrides } from "@/lib/core/persistence
 
 const DEFAULT_CONFIG: Record<LlmTaskKey, ModelConfig> = {
   "villager.dialogue": {
-    provider: "minimax",
-    model: "minimax-m2-her",
+    provider: "vercel_gateway",
+    model: "minimax/minimax-m2-her",
     temperature: 0.9,
     maxTokens: 420,
     topP: 0.95,
     fallback: {
-      provider: "deepseek",
-      model: "deepseek-chat",
+      provider: "minimax",
+      model: "minimax-m2-her",
     },
   },
   "villager.letter": {
-    provider: "minimax",
-    model: "minimax-m2-her",
+    provider: "vercel_gateway",
+    model: "minimax/minimax-m2-her",
     temperature: 0.85,
     maxTokens: 520,
     fallback: {
-      provider: "deepseek",
-      model: "deepseek-chat",
+      provider: "minimax",
+      model: "minimax-m2-her",
     },
   },
   "director.daily-plan": {
-    provider: "aihubmix",
-    model: "gpt-4o-mini",
+    provider: "vercel_gateway",
+    model: "openai/gpt-4o-mini",
     temperature: 0.4,
     maxTokens: 800,
     fallback: {
@@ -34,8 +34,8 @@ const DEFAULT_CONFIG: Record<LlmTaskKey, ModelConfig> = {
     },
   },
   "reporter.daily": {
-    provider: "aihubmix",
-    model: "gpt-4o-mini",
+    provider: "vercel_gateway",
+    model: "openai/gpt-4o-mini",
     temperature: 0.7,
     maxTokens: 900,
     fallback: {
@@ -44,8 +44,8 @@ const DEFAULT_CONFIG: Record<LlmTaskKey, ModelConfig> = {
     },
   },
   "memory.compress": {
-    provider: "aihubmix",
-    model: "gpt-4o-mini",
+    provider: "vercel_gateway",
+    model: "openai/gpt-4o-mini",
     temperature: 0.3,
     maxTokens: 750,
     fallback: {
@@ -54,8 +54,8 @@ const DEFAULT_CONFIG: Record<LlmTaskKey, ModelConfig> = {
     },
   },
   "decision.light": {
-    provider: "aihubmix",
-    model: "gpt-4o-mini",
+    provider: "vercel_gateway",
+    model: "openai/gpt-4o-mini",
     temperature: 0.2,
     maxTokens: 320,
     fallback: {
