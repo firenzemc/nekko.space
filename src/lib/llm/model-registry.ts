@@ -4,23 +4,23 @@ import { loadPersistedOverrides, persistOverrides } from "@/lib/core/persistence
 const DEFAULT_CONFIG: Record<LlmTaskKey, ModelConfig> = {
   "villager.dialogue": {
     provider: "vercel_gateway",
-    model: "minimax/minimax-m2-her",
+    model: "minimax/minimax-m2.5",
     temperature: 0.9,
     maxTokens: 420,
     topP: 0.95,
     fallback: {
       provider: "minimax",
-      model: "minimax-m2-her",
+      model: "minimax-m2.5",
     },
   },
   "villager.letter": {
     provider: "vercel_gateway",
-    model: "minimax/minimax-m2-her",
+    model: "minimax/minimax-m2.5",
     temperature: 0.85,
     maxTokens: 520,
     fallback: {
       provider: "minimax",
-      model: "minimax-m2-her",
+      model: "minimax-m2.5",
     },
   },
   "director.daily-plan": {
@@ -30,7 +30,7 @@ const DEFAULT_CONFIG: Record<LlmTaskKey, ModelConfig> = {
     maxTokens: 800,
     fallback: {
       provider: "minimax",
-      model: "minimax-m2-her",
+      model: "minimax-m2.5",
     },
   },
   "reporter.daily": {
@@ -40,7 +40,7 @@ const DEFAULT_CONFIG: Record<LlmTaskKey, ModelConfig> = {
     maxTokens: 900,
     fallback: {
       provider: "minimax",
-      model: "minimax-m2-her",
+      model: "minimax-m2.5",
     },
   },
   "memory.compress": {
@@ -60,7 +60,7 @@ const DEFAULT_CONFIG: Record<LlmTaskKey, ModelConfig> = {
     maxTokens: 320,
     fallback: {
       provider: "minimax",
-      model: "minimax-m2-her",
+      model: "minimax-m2.5",
     },
   },
 };

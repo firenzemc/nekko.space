@@ -45,7 +45,7 @@ bun dev
 
 默认模型映射在 `src/lib/llm/model-registry.ts`：
 
-- `villager.dialogue` -> MiniMax M2-Her
+- `villager.dialogue` -> MiniMax M2.5（Vercel Gateway）
 - `director.daily-plan` -> AIHubMix (`gpt-4o-mini`)
 - `reporter.daily` -> AIHubMix (`gpt-4o-mini`)
 
