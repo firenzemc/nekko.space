@@ -49,6 +49,13 @@ export async function GET(request: Request) {
 
   try {
     await db.execute(sql`select 1`);
+    await db.execute(sql`
+      create table if not exists kv_store (
+        key text primary key,
+        value jsonb not null,
+        updated_at timestamptz not null default now()
+      )
+    `);
 
     const payload = {
       ts: new Date().toISOString(),
