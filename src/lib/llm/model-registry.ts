@@ -50,7 +50,7 @@ const DEFAULT_CONFIG: Record<LlmTaskKey, ModelConfig> = {
     maxTokens: 750,
     fallback: {
       provider: "minimax",
-      model: "minimax-m2-her",
+      model: "minimax-m2.5",
     },
   },
   "decision.light": {
