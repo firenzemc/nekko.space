@@ -29,6 +29,10 @@ bun dev
   - 仅检查关键环境变量是否已注入（不触发模型调用）
 - `GET /api/health/llm?probe=1`
   - 低成本探测模型调用是否落入 mock fallback
+- `GET /api/health/db`
+  - 检查数据库连接变量是否注入、当前连接来源
+- `GET /api/health/db?probe=1`
+  - 执行数据库读写探测（kv_store）
 - `GET /api/models`
   - 查看当前任务到模型的映射
 - `POST /api/models`
