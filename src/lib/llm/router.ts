@@ -16,6 +16,7 @@ export type LlmRouteResult = {
   text: string;
   model: string;
   provider: string;
+  isMockFallback: boolean;
 };
 
 export const runLlmTask = async ({
@@ -85,5 +86,6 @@ export const runLlmTask = async ({
     text,
     model: config.model,
     provider: config.provider,
+    isMockFallback: text.startsWith(`[${config.provider}/${config.model}] `),
   };
 };
