@@ -3,6 +3,7 @@ import { deriveTimeSlot, nextWeather } from "@/lib/world/clock";
 import { runVillagerTurn } from "@/lib/agents/villager-agent";
 import { planDailyHeadline } from "@/lib/agents/director-agent";
 import { generateDailyReport } from "@/lib/agents/reporter-agent";
+import { generateGossip } from "@/lib/agents/gossip/engine";
 import { runLlmTask } from "@/lib/llm/router";
 
 const maybeSendVillagerMail = async () => {
@@ -72,6 +73,24 @@ export const runWorldTick = async () => {
   store.world.villagers = villagers.map((item) => item.villager);
   store.events.unshift(...villagers.map((item) => item.event));
   store.events = store.events.slice(0, 200);
+
+  // Gossip system: random chance for two villagers to chat about recent events
+  if (store.world.villagers.length >= 2 && Math.random() > 0.6) {
+    const shuffled = [...store.world.villagers].sort(() => Math.random() - 0.5);
+    const speaker = shuffled[0];
+    const listener = shuffled[1];
+    const gossipText = await generateGossip(speaker, listener, store.world, store.events);
+    if (gossipText) {
+      store.events.unshift({
+        id: `evt_gossip_${Date.now()}`,
+        timestamp: nowIso,
+        title: `${speaker.nameZh}和${listener.nameZh}的悄悄话`,
+        detail: `${speaker.nameZh}对${listener.nameZh}说：“${gossipText}”`,
+        actors: [speaker.id, listener.id],
+        importance: 5,
+      });
+    }
+  }
 
   await maybeSendVillagerMail();
 
