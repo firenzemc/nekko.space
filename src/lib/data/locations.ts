@@ -1,3 +1,10 @@
+export type LocationFurniture = {
+  id: string;
+  name: string;
+  emoji: string;
+  addedAt: string;
+};
+
 export const ISLAND_LOCATIONS = [
   { id: "plaza", name: "广场", emoji: "⛲", description: "小岛的中心，大家集合的地方" },
   { id: "beach", name: "海滩", emoji: "🏖️", description: "海边，可以捡贝壳、钓鱼" },

@@ -9,6 +9,7 @@ import type {
 } from "@/lib/core/types";
 import { deriveTimeSlot, nextWeather } from "@/lib/world/clock";
 import { loadPersistedState, persistState } from "@/lib/core/persistence";
+import type { LocationFurniture } from "@/lib/data/locations";
 
 type MemoryStore = {
   world: WorldState;
@@ -17,6 +18,7 @@ type MemoryStore = {
   mails: MailMessage[];
   affinities: VillagerAffinity[];
   tickLogs: TickLog[];
+  furniture: Record<string, LocationFurniture[]>;
 };
 
 declare global {
@@ -43,6 +45,7 @@ const createInitialState = (): MemoryStore => {
       lastInteractionAt: now.toISOString(),
     })),
     tickLogs: [],
+    furniture: {},
   };
 };
 
@@ -68,6 +71,7 @@ export const hydrateStore = async () => {
         lastInteractionAt: new Date().toISOString(),
     }));
   store.tickLogs = persisted.tickLogs ?? [];
+  store.furniture = persisted.furniture ?? {};
 };
 
 export const flushStore = async () => {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { hydrateStore, store } from "@/lib/core/store";
 import { ISLAND_LOCATIONS, getLocationEmoji } from "@/lib/data/locations";
+import { ModifyPanel } from "@/components/modify-panel";
 
 export default async function MapPage() {
   await hydrateStore();
@@ -12,6 +13,8 @@ export default async function MapPage() {
     villagersAtLocation.set(v.location, existing);
   }
 
+  const furnitureAtLocation = store.furniture || {};
+
   return (
     <main className="mx-auto max-w-4xl p-6">
       <div className="mb-4 flex items-center justify-between">
@@ -21,9 +24,12 @@ export default async function MapPage() {
         </Link>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+      <ModifyPanel />
+
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
         {ISLAND_LOCATIONS.map((loc) => {
           const villagers = villagersAtLocation.get(loc.name) || [];
+          const furniture = furnitureAtLocation[loc.name] || [];
           return (
             <article
               key={loc.id}
@@ -37,8 +43,22 @@ export default async function MapPage() {
                 </div>
               </div>
 
+              {furniture.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {furniture.map((f) => (
+                    <span
+                      key={f.id}
+                      className="rounded-full bg-[var(--accent)]/10 px-2 py-0.5 text-xs"
+                      title={`添加于 ${new Date(f.addedAt).toLocaleDateString()}`}
+                    >
+                      {f.emoji} {f.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               {villagers.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1">
+                <div className="mt-2 flex flex-wrap gap-1">
                   {villagers.map((v) => (
                     <span
                       key={v.id}
@@ -50,8 +70,8 @@ export default async function MapPage() {
                 </div>
               )}
 
-              {villagers.length === 0 && (
-                <p className="mt-2 text-xs opacity-50">暂无村民</p>
+              {villagers.length === 0 && furniture.length === 0 && (
+                <p className="mt-2 text-xs opacity-50">暂无村民和家具</p>
               )}
             </article>
           );

@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { store } from "@/lib/core/store";
+import { LastUpdated } from "@/components/last-updated";
+
+const VERSION = "0.2.0";
+const BUILD_DATE = "2025-03-05";
 
 export default function Home() {
   const statusCards = [
@@ -24,10 +28,13 @@ export default function Home() {
   return (
     <main className="mx-auto max-w-5xl p-6">
       <section className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm">
-        <p className="text-sm uppercase tracking-wide text-[var(--accent)]">小岛物语 · MVP1</p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm uppercase tracking-wide text-[var(--accent)]">小岛物语 · v{VERSION}</p>
+          <p className="text-xs opacity-50">Build {BUILD_DATE}</p>
+        </div>
         <h1 className="mt-2 text-3xl font-semibold">岛屿正在持续运行中</h1>
         <p className="mt-3 text-sm leading-6 opacity-90">{store.world.headline}</p>
-        <p className="mt-2 text-xs opacity-70">最后更新：{store.world.lastUpdatedAt}</p>
+        <p className="mt-2 text-xs opacity-70">最后更新：<LastUpdated isoString={store.world.lastUpdatedAt} /></p>
       </section>
 
       <section className="mt-6 grid gap-3 sm:grid-cols-4">
@@ -68,6 +75,9 @@ export default function Home() {
       </section>
 
       <nav className="mt-6 flex flex-wrap gap-3 text-sm">
+        <Link className="rounded-full border px-4 py-2 hover:bg-black/5" href="/map">
+          岛屿地图
+        </Link>
         <Link className="rounded-full border px-4 py-2 hover:bg-black/5" href="/newspaper">
           查看岛报
         </Link>

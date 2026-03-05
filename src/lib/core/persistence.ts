@@ -12,6 +12,7 @@ import type {
 import { db, hasDatabase } from "@/lib/db/client";
 import { kvStore } from "@/lib/db/schema";
 import type { ModelOverride } from "@/lib/llm/types";
+import type { LocationFurniture } from "@/lib/data/locations";
 
 type PersistedState = {
   world: WorldState;
@@ -20,6 +21,7 @@ type PersistedState = {
   mails?: MailMessage[];
   affinities?: VillagerAffinity[];
   tickLogs?: TickLog[];
+  furniture?: Record<string, LocationFurniture[]>;
 };
 
 const STATE_KEY = "island_state";
