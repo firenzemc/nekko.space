@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { hydrateStore, store } from "@/lib/core/store";
+import { MailComposer } from "@/components/mail-composer";
 
 export default async function MailboxPage() {
   await hydrateStore();
@@ -17,6 +18,15 @@ export default async function MailboxPage() {
         <p>信件系统已接入 MVP2 第一版。</p>
         <p className="mt-2">发送信件：`POST /api/mail/send`，参数含 `villagerId`、`subject`、`content`。</p>
         <p className="mt-1">查看信件：`GET /api/mail/list?villagerId=merengue`。</p>
+      </section>
+
+      <section className="mt-5">
+        <MailComposer
+          villagers={store.world.villagers.map((villager) => ({
+            id: villager.id,
+            nameZh: villager.nameZh,
+          }))}
+        />
       </section>
 
       <section className="mt-5 space-y-3">

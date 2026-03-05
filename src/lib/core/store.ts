@@ -49,28 +49,21 @@ if (!globalThis.__islandStore) {
   globalThis.__islandStore = store;
 }
 
-let hydratePromise: Promise<void> | null = null;
-
 export const hydrateStore = async () => {
-  if (!hydratePromise) {
-    hydratePromise = (async () => {
-      const persisted = await loadPersistedState();
-      if (!persisted) return;
-      store.world = persisted.world;
-      store.events = persisted.events;
-      store.reports = persisted.reports;
-      store.mails = persisted.mails ?? [];
-      store.affinities =
-        persisted.affinities ??
-        store.world.villagers.map((villager) => ({
-          villagerId: villager.id,
-          score: 60,
-          lastInteractionAt: new Date().toISOString(),
-        }));
-    })();
-  }
+  const persisted = await loadPersistedState();
+  if (!persisted) return;
 
-  await hydratePromise;
+  store.world = persisted.world;
+  store.events = persisted.events;
+  store.reports = persisted.reports;
+  store.mails = persisted.mails ?? [];
+  store.affinities =
+    persisted.affinities ??
+    store.world.villagers.map((villager) => ({
+      villagerId: villager.id,
+      score: 60,
+      lastInteractionAt: new Date().toISOString(),
+    }));
 };
 
 export const flushStore = async () => {

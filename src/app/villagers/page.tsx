@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { hydrateStore, store } from "@/lib/core/store";
+import { GiftSender } from "@/components/gift-sender";
 
 const personalityLabel = {
   normal: "普通",
@@ -24,6 +25,15 @@ export default async function VillagersPage() {
           返回岛屿总览
         </Link>
       </div>
+
+      <section className="mb-5">
+        <GiftSender
+          villagers={store.world.villagers.map((villager) => ({
+            id: villager.id,
+            nameZh: villager.nameZh,
+          }))}
+        />
+      </section>
 
       <div className="grid gap-4 sm:grid-cols-2">
         {store.world.villagers.map((villager) => (
