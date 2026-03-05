@@ -6,23 +6,32 @@ import type {
   VillagerDecision,
 } from "@/lib/core/types";
 import { runLlmTask } from "@/lib/llm/router";
+import { getRandomLocation } from "@/lib/data/locations";
 
 const randomMoodDelta = () => Math.floor(Math.random() * 9) - 4;
 
-const selectAction = (villager: VillagerProfile, timeSlot: IslandTimeSlot): string => {
+const selectActionAndLocation = (villager: VillagerProfile, timeSlot: IslandTimeSlot): { action: string; location: string } => {
   if (villager.personality === "jock" && (timeSlot === "清晨" || timeSlot === "上午")) {
-    return "在海边进行冲刺训练";
+    return { action: "在海边进行冲刺训练", location: "海边跑道" };
   }
   if (villager.personality === "lazy" && (timeSlot === "下午" || timeSlot === "深夜")) {
-    return "在树荫下打盹并讨论点心";
+    return { action: "在树荫下打盹并讨论点心", location: "森林" };
   }
   if (villager.personality === "sisterly") {
-    return "巡岛并关心其他村民状态";
+    return { action: "巡岛并关心其他村民状态", location: getRandomLocation() };
   }
   if (villager.personality === "smug") {
-    return "在广场和大家分享旅行灵感";
+    return { action: "在广场和大家分享旅行灵感", location: "咖啡摊" };
   }
-  return "打理花园并邀请朋友喝下午茶";
+  // normal personality - random activities
+  const activities = [
+    { action: "打理花园并邀请朋友喝下午茶", location: "花园" },
+    { action: "在广场休息看风景", location: "广场" },
+    { action: "去海边捡贝壳", location: "海滩" },
+    { action: "在码头钓鱼", location: "码头" },
+    { action: "准备美味的甜点", location: "烘焙小屋" },
+  ];
+  return activities[Math.floor(Math.random() * activities.length)];
 };
 
 export const runVillagerTurn = async (
@@ -33,7 +42,7 @@ export const runVillagerTurn = async (
     nowIso: string;
   }
 ): Promise<{ villager: VillagerProfile; event: IslandEvent; decision: VillagerDecision }> => {
-  const action = selectAction(villager, options.timeSlot);
+  const { action, location } = selectActionAndLocation(villager, options.timeSlot);
   const prompt = `${villager.nameZh}（${villager.personality}）在${options.timeSlot}、天气${options.weather}时${action}，用一句日报风格描述。`;
   const narration = await runLlmTask({
     taskKey: "villager.dialogue",
@@ -46,6 +55,7 @@ export const runVillagerTurn = async (
   const updatedVillager: VillagerProfile = {
     ...villager,
     mood,
+    location,
   };
 
   return {
