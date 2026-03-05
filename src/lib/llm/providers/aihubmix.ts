@@ -1,3 +1,5 @@
+import { fetchJsonWithTimeout } from "@/lib/llm/providers/http";
+
 type AiHubMixResponse = {
   choices?: Array<{
     message?: {
@@ -17,7 +19,9 @@ export const callAiHubMix = async (options: {
   if (!apiKey) return null;
 
   try {
-    const response = await fetch("https://aihubmix.com/v1/chat/completions", {
+    const response = await fetchJsonWithTimeout(
+      "https://aihubmix.com/v1/chat/completions",
+      {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -30,9 +34,11 @@ export const callAiHubMix = async (options: {
         max_tokens: options.maxTokens,
         top_p: options.topP,
       }),
-    });
+      },
+      15000
+    );
 
-    if (!response.ok) return null;
+    if (!response?.ok) return null;
     const data = (await response.json()) as AiHubMixResponse;
     return data.choices?.[0]?.message?.content?.trim() ?? null;
   } catch {

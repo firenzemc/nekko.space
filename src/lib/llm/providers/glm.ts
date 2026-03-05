@@ -1,3 +1,5 @@
+import { fetchJsonWithTimeout } from "@/lib/llm/providers/http";
+
 type GlmResponse = {
   choices?: Array<{
     message?: {
@@ -17,7 +19,9 @@ export const callGlm = async (options: {
   if (!apiKey) return null;
 
   try {
-    const response = await fetch("https://open.bigmodel.cn/api/paas/v4/chat/completions", {
+    const response = await fetchJsonWithTimeout(
+      "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+      {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -30,9 +34,11 @@ export const callGlm = async (options: {
         max_tokens: options.maxTokens,
         top_p: options.topP,
       }),
-    });
+      },
+      15000
+    );
 
-    if (!response.ok) return null;
+    if (!response?.ok) return null;
     const data = (await response.json()) as GlmResponse;
     return data.choices?.[0]?.message?.content?.trim() ?? null;
   } catch {

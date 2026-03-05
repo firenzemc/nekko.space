@@ -1,3 +1,5 @@
+import { fetchJsonWithTimeout } from "@/lib/llm/providers/http";
+
 type OpenAICompatResponse = {
   choices?: Array<{
     message?: {
@@ -17,7 +19,9 @@ export const callOpenAICompatible = async (options: {
 }): Promise<string | null> => {
   try {
     const endpoint = `${options.baseUrl.replace(/\/$/, "")}/chat/completions`;
-    const response = await fetch(endpoint, {
+    const response = await fetchJsonWithTimeout(
+      endpoint,
+      {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -30,9 +34,11 @@ export const callOpenAICompatible = async (options: {
         max_tokens: options.maxTokens,
         top_p: options.topP,
       }),
-    });
+      },
+      15000
+    );
 
-    if (!response.ok) return null;
+    if (!response?.ok) return null;
     const data = (await response.json()) as OpenAICompatResponse;
     return data.choices?.[0]?.message?.content?.trim() ?? null;
   } catch {

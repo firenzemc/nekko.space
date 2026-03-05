@@ -1,3 +1,5 @@
+import { fetchJsonWithTimeout } from "@/lib/llm/providers/http";
+
 type MiniMaxMessage = {
   role: "system" | "user" | "assistant";
   content: string;
@@ -29,7 +31,9 @@ export const callMiniMax = async (options: {
   ];
 
   try {
-    const response = await fetch("https://api.minimax.io/v1/text/chatcompletion_v2", {
+    const response = await fetchJsonWithTimeout(
+      "https://api.minimax.io/v1/text/chatcompletion_v2",
+      {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -42,9 +46,11 @@ export const callMiniMax = async (options: {
         max_tokens: options.maxTokens,
         top_p: options.topP,
       }),
-    });
+      },
+      15000
+    );
 
-    if (!response.ok) return null;
+    if (!response?.ok) return null;
     const data = (await response.json()) as MiniMaxResponse;
     return data.choices?.[0]?.message?.content?.trim() ?? null;
   } catch {
