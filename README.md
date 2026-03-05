@@ -37,6 +37,12 @@ bun dev
   - 查看当前任务到模型的映射
 - `POST /api/models`
   - 写入 runtime model overrides（支持角色级覆盖）
+- `GET /api/mail/list`
+  - 查看岛主信件（支持 `villagerId` 过滤）
+- `POST /api/mail/send`
+  - 给村民写信并生成回信，更新亲密度
+- `POST /api/gift/send`
+  - 给村民送礼物并更新亲密度
 - `GET /api/cron/world-tick`
   - 执行一轮世界推进
 - `GET /api/cron/daily-report`
@@ -53,7 +59,8 @@ bun dev
 
 默认模型映射在 `src/lib/llm/model-registry.ts`：
 
-- `villager.dialogue` -> MiniMax M2.5（Vercel Gateway）
+- `villager.dialogue` -> 默认 MiniMax M2.5（Vercel Gateway）
+- `villager.dialogue` / `villager.letter` -> AIHubMix (`openai_compatible + gpt-4o-mini`，通过 runtime override)
 - `director.daily-plan` -> Vercel Gateway (`openai/gpt-4o-mini`)
 - `reporter.daily` -> Vercel Gateway (`openai/gpt-4o-mini`)
 

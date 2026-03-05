@@ -1,5 +1,11 @@
 import { DEFAULT_VILLAGERS } from "@/lib/data/villagers";
-import type { DailyReport, IslandEvent, WorldState } from "@/lib/core/types";
+import type {
+  DailyReport,
+  IslandEvent,
+  MailMessage,
+  VillagerAffinity,
+  WorldState,
+} from "@/lib/core/types";
 import { deriveTimeSlot, nextWeather } from "@/lib/world/clock";
 import { loadPersistedState, persistState } from "@/lib/core/persistence";
 
@@ -7,6 +13,8 @@ type MemoryStore = {
   world: WorldState;
   events: IslandEvent[];
   reports: DailyReport[];
+  mails: MailMessage[];
+  affinities: VillagerAffinity[];
 };
 
 declare global {
@@ -26,6 +34,12 @@ const createInitialState = (): MemoryStore => {
     },
     events: [],
     reports: [],
+    mails: [],
+    affinities: DEFAULT_VILLAGERS.map((villager) => ({
+      villagerId: villager.id,
+      score: 60,
+      lastInteractionAt: now.toISOString(),
+    })),
   };
 };
 
@@ -45,6 +59,14 @@ export const hydrateStore = async () => {
       store.world = persisted.world;
       store.events = persisted.events;
       store.reports = persisted.reports;
+      store.mails = persisted.mails ?? [];
+      store.affinities =
+        persisted.affinities ??
+        store.world.villagers.map((villager) => ({
+          villagerId: villager.id,
+          score: 60,
+          lastInteractionAt: new Date().toISOString(),
+        }));
     })();
   }
 

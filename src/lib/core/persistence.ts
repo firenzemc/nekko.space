@@ -1,7 +1,13 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { eq, sql } from "drizzle-orm";
-import type { DailyReport, IslandEvent, WorldState } from "@/lib/core/types";
+import type {
+  DailyReport,
+  IslandEvent,
+  MailMessage,
+  VillagerAffinity,
+  WorldState,
+} from "@/lib/core/types";
 import { db, hasDatabase } from "@/lib/db/client";
 import { kvStore } from "@/lib/db/schema";
 import type { ModelOverride } from "@/lib/llm/types";
@@ -10,6 +16,8 @@ type PersistedState = {
   world: WorldState;
   events: IslandEvent[];
   reports: DailyReport[];
+  mails?: MailMessage[];
+  affinities?: VillagerAffinity[];
 };
 
 const STATE_KEY = "island_state";

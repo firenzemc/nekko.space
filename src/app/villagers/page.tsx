@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { store } from "@/lib/core/store";
+import { hydrateStore, store } from "@/lib/core/store";
 
 const personalityLabel = {
   normal: "普通",
@@ -9,7 +9,13 @@ const personalityLabel = {
   smug: "自恋",
 };
 
-export default function VillagersPage() {
+export default async function VillagersPage() {
+  await hydrateStore();
+
+  const affinityByVillager = new Map(
+    store.affinities.map((affinity) => [affinity.villagerId, affinity.score])
+  );
+
   return (
     <main className="mx-auto max-w-4xl p-6">
       <div className="mb-4 flex items-center justify-between">
@@ -37,6 +43,12 @@ export default function VillagersPage() {
               心情值：
               <span className="rounded-full bg-[var(--accent-soft)] px-2 py-1 font-medium text-[var(--accent)]">
                 {villager.mood}
+              </span>
+            </p>
+            <p className="mt-2 text-sm">
+              亲密度：
+              <span className="rounded-full bg-[var(--accent-soft)] px-2 py-1 font-medium text-[var(--accent)]">
+                {affinityByVillager.get(villager.id) ?? 60}
               </span>
             </p>
           </article>

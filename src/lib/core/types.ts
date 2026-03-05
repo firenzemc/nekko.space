@@ -34,3 +34,21 @@ export type DailyReport = {
   title: string;
   sections: Array<{ heading: string; body: string }>;
 };
+
+export type MailMessage = {
+  id: string;
+  fromType: "user" | "villager";
+  fromId: string;
+  toType: "user" | "villager";
+  toId: string;
+  villagerId: string;
+  subject: string;
+  content: string;
+  createdAt: string;
+};
+
+export type VillagerAffinity = {
+  villagerId: string;
+  score: number;
+  lastInteractionAt: string;
+};

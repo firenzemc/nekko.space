@@ -8,5 +8,7 @@ export async function GET() {
     world: store.world,
     latestEvents: store.events.slice(0, 10),
     reports: store.reports.slice(0, 5),
+    mails: store.mails.slice(0, 20),
+    affinities: store.affinities,
   });
 }

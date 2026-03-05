@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import { runDailyReportTick } from "@/lib/world/tick";
+import { isAuthorizedCronRequest } from "@/lib/api/cron-auth";
 
 export async function GET(request: Request) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const auth = request.headers.get("authorization");
-    if (auth !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!isAuthorizedCronRequest(request)) {
+    return NextResponse.json(
+      {
+        error: "Unauthorized",
+        hint: "Use Authorization Bearer CRON_SECRET or Vercel Cron internal header.",
+      },
+      { status: 401 }
+    );
   }
 
   const report = await runDailyReportTick();
