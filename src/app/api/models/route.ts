@@ -14,6 +14,7 @@ const TASKS: LlmTaskKey[] = [
   "reporter.daily",
   "memory.compress",
   "decision.light",
+  "date.interact",
 ];
 
 export async function GET() {

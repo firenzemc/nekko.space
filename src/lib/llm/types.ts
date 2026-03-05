@@ -12,7 +12,8 @@ export type LlmTaskKey =
   | "director.daily-plan"
   | "reporter.daily"
   | "memory.compress"
-  | "decision.light";
+  | "decision.light"
+  | "date.interact";
 
 export type ModelConfig = {
   provider: LlmProvider;

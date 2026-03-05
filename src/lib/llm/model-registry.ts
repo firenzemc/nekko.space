@@ -63,6 +63,16 @@ const DEFAULT_CONFIG: Record<LlmTaskKey, ModelConfig> = {
       model: "minimax-m2.5",
     },
   },
+  "date.interact": {
+    provider: "vercel_gateway",
+    model: "minimax/minimax-m2.5",
+    temperature: 0.8,
+    maxTokens: 600,
+    fallback: {
+      provider: "minimax",
+      model: "minimax-m2.5",
+    },
+  },
 };
 
 const parseEnvOverride = (): ModelOverride[] => {

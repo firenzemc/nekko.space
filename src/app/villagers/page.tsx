@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { hydrateStore, store } from "@/lib/core/store";
 import { GiftSender } from "@/components/gift-sender";
+import { DatePlanner } from "@/components/date-planner";
 
 const personalityLabel = {
   normal: "普通",
@@ -26,14 +27,24 @@ export default async function VillagersPage() {
         </Link>
       </div>
 
-      <section className="mb-5">
-        <GiftSender
-          villagers={store.world.villagers.map((villager) => ({
-            id: villager.id,
-            nameZh: villager.nameZh,
-          }))}
-        />
-      </section>
+      <div className="grid gap-5 md:grid-cols-2 mb-6">
+        <section>
+          <GiftSender
+            villagers={store.world.villagers.map((villager) => ({
+              id: villager.id,
+              nameZh: villager.nameZh,
+            }))}
+          />
+        </section>
+        <section>
+           <DatePlanner
+            villagers={store.world.villagers.map((villager) => ({
+              id: villager.id,
+              nameZh: villager.nameZh,
+            }))}
+          />
+        </section>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         {store.world.villagers.map((villager) => (
