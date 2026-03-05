@@ -77,6 +77,9 @@ export default function Home() {
         <Link className="rounded-full border px-4 py-2 hover:bg-black/5" href="/mailbox">
           岛主信箱
         </Link>
+        <Link className="rounded-full border px-4 py-2 hover:bg-black/5" href="/ticks">
+          自主决策日志
+        </Link>
         <Link className="rounded-full border px-4 py-2 hover:bg-black/5" href="/admin/models">
           模型配置台
         </Link>

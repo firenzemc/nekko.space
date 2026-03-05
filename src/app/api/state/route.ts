@@ -10,5 +10,6 @@ export async function GET() {
     reports: store.reports.slice(0, 5),
     mails: store.mails.slice(0, 20),
     affinities: store.affinities,
+    tickLogs: store.tickLogs.slice(0, 20),
   });
 }

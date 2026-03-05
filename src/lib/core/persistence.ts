@@ -5,6 +5,7 @@ import type {
   DailyReport,
   IslandEvent,
   MailMessage,
+  TickLog,
   VillagerAffinity,
   WorldState,
 } from "@/lib/core/types";
@@ -18,6 +19,7 @@ type PersistedState = {
   reports: DailyReport[];
   mails?: MailMessage[];
   affinities?: VillagerAffinity[];
+  tickLogs?: TickLog[];
 };
 
 const STATE_KEY = "island_state";

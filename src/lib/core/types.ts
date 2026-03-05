@@ -52,3 +52,24 @@ export type VillagerAffinity = {
   score: number;
   lastInteractionAt: string;
 };
+
+export type VillagerDecision = {
+  villagerId: string;
+  villagerName: string;
+  action: string;
+  narration: string;
+  moodBefore: number;
+  moodAfter: number;
+  provider: string;
+  model: string;
+  isMockFallback: boolean;
+};
+
+export type TickLog = {
+  id: string;
+  timestamp: string;
+  timeSlot: IslandTimeSlot;
+  weather: IslandWeather;
+  headline: string;
+  decisions: VillagerDecision[];
+};

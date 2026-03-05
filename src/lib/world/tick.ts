@@ -76,6 +76,17 @@ export const runWorldTick = async () => {
   await maybeSendVillagerMail();
 
   store.world.headline = await planDailyHeadline(store.world);
+
+  store.tickLogs.unshift({
+    id: `tick_${Date.now()}`,
+    timestamp: nowIso,
+    timeSlot: store.world.timeSlot,
+    weather: store.world.weather,
+    headline: store.world.headline,
+    decisions: villagers.map((item) => item.decision),
+  });
+  store.tickLogs = store.tickLogs.slice(0, 120);
+
   await flushStore();
 
   return {

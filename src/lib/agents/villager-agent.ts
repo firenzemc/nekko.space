@@ -1,5 +1,10 @@
 import type { VillagerProfile } from "@/lib/data/villagers";
-import type { IslandEvent, IslandTimeSlot, IslandWeather } from "@/lib/core/types";
+import type {
+  IslandEvent,
+  IslandTimeSlot,
+  IslandWeather,
+  VillagerDecision,
+} from "@/lib/core/types";
 import { runLlmTask } from "@/lib/llm/router";
 
 const randomMoodDelta = () => Math.floor(Math.random() * 9) - 4;
@@ -27,7 +32,7 @@ export const runVillagerTurn = async (
     weather: IslandWeather;
     nowIso: string;
   }
-): Promise<{ villager: VillagerProfile; event: IslandEvent }> => {
+): Promise<{ villager: VillagerProfile; event: IslandEvent; decision: VillagerDecision }> => {
   const action = selectAction(villager, options.timeSlot);
   const prompt = `${villager.nameZh}（${villager.personality}）在${options.timeSlot}、天气${options.weather}时${action}，用一句日报风格描述。`;
   const narration = await runLlmTask({
@@ -36,6 +41,7 @@ export const runVillagerTurn = async (
     prompt,
   });
 
+  const moodBefore = villager.mood;
   const mood = Math.max(0, Math.min(100, villager.mood + randomMoodDelta()));
   const updatedVillager: VillagerProfile = {
     ...villager,
@@ -51,6 +57,17 @@ export const runVillagerTurn = async (
       detail: narration.text,
       actors: [villager.id],
       importance: Math.floor(Math.random() * 4) + 4,
+    },
+    decision: {
+      villagerId: villager.id,
+      villagerName: villager.nameZh,
+      action,
+      narration: narration.text,
+      moodBefore,
+      moodAfter: mood,
+      provider: narration.provider,
+      model: narration.model,
+      isMockFallback: narration.isMockFallback,
     },
   };
 };

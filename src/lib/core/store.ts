@@ -3,6 +3,7 @@ import type {
   DailyReport,
   IslandEvent,
   MailMessage,
+  TickLog,
   VillagerAffinity,
   WorldState,
 } from "@/lib/core/types";
@@ -15,6 +16,7 @@ type MemoryStore = {
   reports: DailyReport[];
   mails: MailMessage[];
   affinities: VillagerAffinity[];
+  tickLogs: TickLog[];
 };
 
 declare global {
@@ -40,6 +42,7 @@ const createInitialState = (): MemoryStore => {
       score: 60,
       lastInteractionAt: now.toISOString(),
     })),
+    tickLogs: [],
   };
 };
 
@@ -62,8 +65,9 @@ export const hydrateStore = async () => {
     store.world.villagers.map((villager) => ({
       villagerId: villager.id,
       score: 60,
-      lastInteractionAt: new Date().toISOString(),
+        lastInteractionAt: new Date().toISOString(),
     }));
+  store.tickLogs = persisted.tickLogs ?? [];
 };
 
 export const flushStore = async () => {
