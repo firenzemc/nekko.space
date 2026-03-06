@@ -11,5 +11,6 @@ export async function GET() {
     mails: store.mails.slice(0, 20),
     affinities: store.affinities,
     tickLogs: store.tickLogs.slice(0, 20),
+    villagerRelationships: store.villagerRelationships,
   });
 }

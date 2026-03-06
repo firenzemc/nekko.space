@@ -17,6 +17,7 @@ export type WorldState = {
   headline: string;
   villagers: VillagerProfile[];
   lastUpdatedAt: string;
+  plotHook?: string;
 };
 
 export type IslandEvent = {
@@ -53,6 +54,14 @@ export type VillagerAffinity = {
   lastInteractionAt: string;
 };
 
+export type VillagerRelationship = {
+  villagerA: string;
+  villagerB: string;
+  score: number;
+  label: string;
+  lastUpdatedAt: string;
+};
+
 export type VillagerDecision = {
   villagerId: string;
   villagerName: string;
@@ -63,6 +72,7 @@ export type VillagerDecision = {
   provider: string;
   model: string;
   isMockFallback: boolean;
+  moodReason?: string;
 };
 
 export type TickLog = {

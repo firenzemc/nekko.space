@@ -14,9 +14,17 @@ export const callAiHubMix = async (options: {
   temperature: number;
   maxTokens: number;
   topP?: number;
+  systemPrompt?: string;
 }): Promise<string | null> => {
   const apiKey = process.env.AIHUBMIX_API_KEY;
   if (!apiKey) return null;
+
+  const messages = options.systemPrompt
+    ? [
+        { role: "system" as const, content: options.systemPrompt },
+        { role: "user" as const, content: options.prompt },
+      ]
+    : [{ role: "user" as const, content: options.prompt }];
 
   try {
     const response = await fetchJsonWithTimeout(
@@ -29,7 +37,7 @@ export const callAiHubMix = async (options: {
       },
       body: JSON.stringify({
         model: options.model,
-        messages: [{ role: "user", content: options.prompt }],
+        messages,
         temperature: options.temperature,
         max_tokens: options.maxTokens,
         top_p: options.topP,

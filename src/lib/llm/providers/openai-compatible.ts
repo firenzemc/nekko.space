@@ -16,7 +16,15 @@ export const callOpenAICompatible = async (options: {
   temperature: number;
   maxTokens: number;
   topP?: number;
+  systemPrompt?: string;
 }): Promise<string | null> => {
+  const messages = options.systemPrompt
+    ? [
+        { role: "system" as const, content: options.systemPrompt },
+        { role: "user" as const, content: options.prompt },
+      ]
+    : [{ role: "user" as const, content: options.prompt }];
+
   try {
     const endpoint = `${options.baseUrl.replace(/\/$/, "")}/chat/completions`;
     const response = await fetchJsonWithTimeout(
@@ -29,7 +37,7 @@ export const callOpenAICompatible = async (options: {
       },
       body: JSON.stringify({
         model: options.model,
-        messages: [{ role: "user", content: options.prompt }],
+        messages,
         temperature: options.temperature,
         max_tokens: options.maxTokens,
         top_p: options.topP,

@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { runLlmTask } from "@/lib/llm/router";
 import { flushStore, hydrateStore, store } from "@/lib/core/store";
+import { VILLAGER_BIOS } from "@/lib/data/villager-profiles";
+import { LOCATION_PROFILES } from "@/lib/data/location-profiles";
+import { ISLAND_LOCATIONS } from "@/lib/data/locations";
 
 export async function POST(request: Request) {
   await hydrateStore();
@@ -36,16 +39,29 @@ export async function POST(request: Request) {
     );
   }
 
-  const prompt = `岛主邀请${villager.nameZh}（${villager.personality}）去【${location}】进行【${activity}】。
-请作为${villager.nameZh}，基于你的性格特点，生成一句你们在约会过程中的生动对话或反应。
+  // Find location profile for atmosphere context
+  const locId = ISLAND_LOCATIONS.find((l) => l.name === location)?.id;
+  const locProfile = locId ? LOCATION_PROFILES[locId] : undefined;
+  const atmosphere = locProfile
+    ? locProfile.atmosphereByTimeSlot[store.world.timeSlot] ?? ""
+    : "";
+  const atmosphereBlock = atmosphere
+    ? `\n场景氛围：${atmosphere}`
+    : "";
+
+  const bio = VILLAGER_BIOS[villagerId];
+
+  const prompt = `岛主邀请你去【${location}】进行【${activity}】。${atmosphereBlock}
+请生成一句你们在约会过程中的生动对话或反应。
 要求：
-- 符合角色性格。
+- 符合你的性格。
 - 简短自然（1-3句话）。
 - 表现出你们正在一起进行这个活动。`;
 
   const reply = await runLlmTask({
     taskKey: "date.interact",
     scope: `villager:${villagerId}`,
+    systemPrompt: bio?.systemPromptCore,
     prompt,
   });
 

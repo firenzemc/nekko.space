@@ -7,6 +7,7 @@ import type {
   MailMessage,
   TickLog,
   VillagerAffinity,
+  VillagerRelationship,
   WorldState,
 } from "@/lib/core/types";
 import { db, hasDatabase } from "@/lib/db/client";
@@ -22,6 +23,7 @@ type PersistedState = {
   affinities?: VillagerAffinity[];
   tickLogs?: TickLog[];
   furniture?: Record<string, LocationFurniture[]>;
+  villagerRelationships?: VillagerRelationship[];
 };
 
 const STATE_KEY = "island_state";

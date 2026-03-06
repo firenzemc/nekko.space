@@ -13,7 +13,8 @@ export type LlmTaskKey =
   | "reporter.daily"
   | "memory.compress"
   | "decision.light"
-  | "date.interact";
+  | "date.interact"
+  | "villager.behavior";
 
 export type ModelConfig = {
   provider: LlmProvider;

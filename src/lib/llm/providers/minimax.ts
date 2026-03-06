@@ -19,16 +19,17 @@ export const callMiniMax = async (options: {
   temperature: number;
   maxTokens: number;
   topP?: number;
+  systemPrompt?: string;
 }): Promise<string | null> => {
   const apiKey = process.env.MINIMAX_API_KEY;
   if (!apiKey) return null;
 
-  const messages: MiniMaxMessage[] = [
-    {
-      role: "user",
-      content: options.prompt,
-    },
-  ];
+  const messages: MiniMaxMessage[] = options.systemPrompt
+    ? [
+        { role: "system", content: options.systemPrompt },
+        { role: "user", content: options.prompt },
+      ]
+    : [{ role: "user", content: options.prompt }];
 
   try {
     const response = await fetchJsonWithTimeout(

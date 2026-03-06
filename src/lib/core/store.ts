@@ -5,11 +5,13 @@ import type {
   MailMessage,
   TickLog,
   VillagerAffinity,
+  VillagerRelationship,
   WorldState,
 } from "@/lib/core/types";
 import { deriveTimeSlot, nextWeather } from "@/lib/world/clock";
 import { loadPersistedState, persistState } from "@/lib/core/persistence";
 import type { LocationFurniture } from "@/lib/data/locations";
+import { VILLAGER_BIOS } from "@/lib/data/villager-profiles";
 
 type MemoryStore = {
   world: WorldState;
@@ -19,11 +21,35 @@ type MemoryStore = {
   affinities: VillagerAffinity[];
   tickLogs: TickLog[];
   furniture: Record<string, LocationFurniture[]>;
+  villagerRelationships: VillagerRelationship[];
 };
 
 declare global {
   var __islandStore: MemoryStore | undefined;
 }
+
+const buildInitialRelationships = (): VillagerRelationship[] => {
+  const now = new Date().toISOString();
+  const relationships: VillagerRelationship[] = [];
+  const seen = new Set<string>();
+
+  for (const bio of Object.values(VILLAGER_BIOS)) {
+    for (const [otherId, rel] of Object.entries(bio.relationships)) {
+      const key = [bio.id, otherId].sort().join(":");
+      if (seen.has(key)) continue;
+      seen.add(key);
+      relationships.push({
+        villagerA: bio.id,
+        villagerB: otherId,
+        score: rel.baseScore,
+        label: rel.label,
+        lastUpdatedAt: now,
+      });
+    }
+  }
+
+  return relationships;
+};
 
 const createInitialState = (): MemoryStore => {
   const now = new Date();
@@ -46,6 +72,7 @@ const createInitialState = (): MemoryStore => {
     })),
     tickLogs: [],
     furniture: {},
+    villagerRelationships: buildInitialRelationships(),
   };
 };
 
@@ -72,6 +99,10 @@ export const hydrateStore = async () => {
     }));
   store.tickLogs = persisted.tickLogs ?? [];
   store.furniture = persisted.furniture ?? {};
+  store.villagerRelationships =
+    persisted.villagerRelationships && persisted.villagerRelationships.length > 0
+      ? persisted.villagerRelationships
+      : buildInitialRelationships();
 };
 
 export const flushStore = async () => {

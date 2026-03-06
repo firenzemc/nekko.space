@@ -73,6 +73,16 @@ const DEFAULT_CONFIG: Record<LlmTaskKey, ModelConfig> = {
       model: "minimax-m2.5",
     },
   },
+  "villager.behavior": {
+    provider: "vercel_gateway",
+    model: "openai/gpt-4o-mini",
+    temperature: 0.7,
+    maxTokens: 600,
+    fallback: {
+      provider: "minimax",
+      model: "minimax-m2.5",
+    },
+  },
 };
 
 const parseEnvOverride = (): ModelOverride[] => {

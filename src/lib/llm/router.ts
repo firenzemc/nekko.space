@@ -10,6 +10,7 @@ type RouteOptions = {
   taskKey: LlmTaskKey;
   scope?: "global" | `villager:${string}`;
   prompt: string;
+  systemPrompt?: string;
 };
 
 export type LlmRouteResult = {
@@ -23,6 +24,7 @@ export const runLlmTask = async ({
   taskKey,
   scope = "global",
   prompt,
+  systemPrompt,
 }: RouteOptions): Promise<LlmRouteResult> => {
   const config = await getModelConfig(taskKey, scope);
 
@@ -32,6 +34,7 @@ export const runLlmTask = async ({
     temperature: config.temperature,
     maxTokens: config.maxTokens,
     topP: config.topP,
+    systemPrompt,
   };
 
   let text: string | null = null;

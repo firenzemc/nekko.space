@@ -1,10 +1,14 @@
 import { flushStore, hydrateStore, store } from "@/lib/core/store";
 import { deriveTimeSlot, nextWeather } from "@/lib/world/clock";
 import { runVillagerTurn } from "@/lib/agents/villager-agent";
-import { planDailyHeadline } from "@/lib/agents/director-agent";
+import { planDailyPlot } from "@/lib/agents/director-agent";
 import { generateDailyReport } from "@/lib/agents/reporter-agent";
-import { generateGossip } from "@/lib/agents/gossip/engine";
+import {
+  generateGossip,
+  updateRelationshipAfterGossip,
+} from "@/lib/agents/gossip/engine";
 import { runLlmTask } from "@/lib/llm/router";
+import { VILLAGER_BIOS } from "@/lib/data/villager-profiles";
 
 const maybeSendVillagerMail = async () => {
   if (Math.random() > 0.28) return;
@@ -15,10 +19,19 @@ const maybeSendVillagerMail = async () => {
   if (!villager) return;
 
   const affinity = store.affinities.find((item) => item.villagerId === villager.id);
-  const prompt = `你是${villager.nameZh}（${villager.personality}）。请给岛主写一封简短中文信件（2-3句），分享你在${store.world.timeSlot}、${store.world.weather}天气里的小见闻，并带一句温暖问候。`;
+  const bio = VILLAGER_BIOS[villager.id];
+  const affinityScore = affinity?.score ?? 60;
+  const toneHint =
+    affinityScore >= 80
+      ? "语气亲密，像对好朋友一样"
+      : affinityScore >= 60
+        ? "语气友好热情"
+        : "语气礼貌但保持距离";
+  const prompt = `请给岛主写一封简短中文信件（2-3句），分享你在${store.world.timeSlot}、${store.world.weather}天气里的小见闻，并带一句温暖问候。${toneHint}。`;
   const reply = await runLlmTask({
     taskKey: "villager.letter",
     scope: `villager:${villager.id}`,
+    systemPrompt: bio?.systemPromptCore,
     prompt,
   });
 
@@ -66,6 +79,10 @@ export const runWorldTick = async () => {
         timeSlot: store.world.timeSlot,
         weather: store.world.weather,
         nowIso,
+        recentEvents: store.events.slice(0, 5),
+        affinity: store.affinities.find((a) => a.villagerId === villager.id),
+        villagerRelationships: store.villagerRelationships,
+        plotHook: store.world.plotHook,
       })
     )
   );
@@ -79,22 +96,35 @@ export const runWorldTick = async () => {
     const shuffled = [...store.world.villagers].sort(() => Math.random() - 0.5);
     const speaker = shuffled[0];
     const listener = shuffled[1];
-    const gossipText = await generateGossip(speaker, listener, store.world, store.events);
+    const gossipText = await generateGossip(
+      speaker,
+      listener,
+      store.world,
+      store.events,
+      store.villagerRelationships
+    );
     if (gossipText) {
       store.events.unshift({
         id: `evt_gossip_${Date.now()}`,
         timestamp: nowIso,
         title: `${speaker.nameZh}和${listener.nameZh}的悄悄话`,
-        detail: `${speaker.nameZh}对${listener.nameZh}说：“${gossipText}”`,
+        detail: `${speaker.nameZh}对${listener.nameZh}说：”${gossipText}”`,
         actors: [speaker.id, listener.id],
         importance: 5,
       });
+      updateRelationshipAfterGossip(
+        speaker.id,
+        listener.id,
+        store.villagerRelationships
+      );
     }
   }
 
   await maybeSendVillagerMail();
 
-  store.world.headline = await planDailyHeadline(store.world);
+  const dailyPlot = await planDailyPlot(store.world, store.events);
+  store.world.headline = dailyPlot.headline;
+  store.world.plotHook = dailyPlot.plotHook;
 
   store.tickLogs.unshift({
     id: `tick_${Date.now()}`,

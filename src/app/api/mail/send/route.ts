@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runLlmTask } from "@/lib/llm/router";
 import { flushStore, hydrateStore, store } from "@/lib/core/store";
+import { VILLAGER_BIOS } from "@/lib/data/villager-profiles";
 
 const userName = "岛主";
 
@@ -68,10 +69,12 @@ export async function POST(request: Request) {
     createdAt: now,
   };
 
+  const bio = VILLAGER_BIOS[villagerId];
   const reply = await runLlmTask({
     taskKey: "villager.letter",
     scope: `villager:${villagerId}`,
-    prompt: `你是${villager.nameZh}（${villager.personality}）。岛主来信主题：${subject}，内容：${content}。请回一封温暖、简短、有角色感的中文回信（2-4句）。`,
+    systemPrompt: bio?.systemPromptCore,
+    prompt: `岛主来信主题：${subject}，内容：${content}。请回一封温暖、简短、有角色感的中文回信（2-4句）。`,
   });
 
   const villagerMail = {
