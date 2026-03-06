@@ -1,6 +1,8 @@
 import { store } from "@/lib/core/store";
 import { LastUpdated } from "@/components/last-updated";
 import { deriveSeason, getIslandDate } from "@/lib/world/clock";
+import { TickButton } from "@/components/tick-button";
+import Link from "next/link";
 
 const WEATHER_EMOJI: Record<string, string> = {
   晴天: "☀️",
@@ -30,9 +32,12 @@ export default function Home() {
           {WEATHER_EMOJI[store.world.weather] ?? "🏝️"}{" "}
           {store.world.headline}
         </h1>
-        <p className="mt-3 text-sm opacity-70">
-          <LastUpdated isoString={store.world.lastUpdatedAt} />
-        </p>
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-sm opacity-70">
+            <LastUpdated isoString={store.world.lastUpdatedAt} />
+          </span>
+          <TickButton />
+        </div>
       </section>
 
       {/* Status cards */}
@@ -62,7 +67,7 @@ export default function Home() {
         <h2 className="text-lg font-semibold">村民速览</h2>
         <div className="mt-3 space-y-2">
           {store.world.villagers.map((v) => (
-            <div key={v.id} className="flex items-center gap-3 text-sm">
+            <Link key={v.id} href={`/villagers/${v.id}`} className="flex items-center gap-3 text-sm hover:bg-[var(--accent-soft)] rounded-lg px-1 py-0.5 -mx-1 transition-colors">
               <span className="text-lg">{SPECIES_EMOJI[v.species] ?? "🐾"}</span>
               <span className="font-medium w-16 shrink-0">{v.nameZh}</span>
               <span className="opacity-70 shrink-0">{v.location}</span>
@@ -79,7 +84,7 @@ export default function Home() {
                 </div>
               </div>
               <span className="text-xs opacity-50 w-6 text-right">{v.mood}</span>
-            </div>
+            </Link>
           ))}
         </div>
       </section>

@@ -1,6 +1,7 @@
 import { hydrateStore, store } from "@/lib/core/store";
 import { GiftSender } from "@/components/gift-sender";
 import { DatePlanner } from "@/components/date-planner";
+import Link from "next/link";
 
 const personalityLabel: Record<string, string> = {
   normal: "普通",
@@ -79,9 +80,10 @@ export default async function VillagersPage() {
         {store.world.villagers.map((villager) => {
           const affinity = affinityByVillager.get(villager.id) ?? 60;
           return (
-            <article
+            <Link
               key={villager.id}
-              className="rounded-2xl border border-[var(--border)] overflow-hidden"
+              href={`/villagers/${villager.id}`}
+              className="block rounded-2xl border border-[var(--border)] overflow-hidden hover:border-[var(--accent)] transition-colors"
             >
               {/* Personality color bar */}
               <div
@@ -110,7 +112,7 @@ export default async function VillagersPage() {
                 <MoodBar value={villager.mood} label="心情" />
                 <MoodBar value={affinity} label="亲密度" />
               </div>
-            </article>
+            </Link>
           );
         })}
       </div>

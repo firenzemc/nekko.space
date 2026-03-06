@@ -1,34 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { store, flushStore } from "@/lib/core/store";
+import { store, flushStore, hydrateStore } from "@/lib/core/store";
 import { ISLAND_LOCATIONS } from "@/lib/data/locations";
+import { runLlmTask } from "@/lib/llm/router";
 
-const FURNITURE_KEYWORDS: Record<string, { emoji: string; keywords: string[] }> = {
-  "长椅": { emoji: "🪑", keywords: ["长椅", "椅子", "凳子", "椅子"] },
-  "桌子": { emoji: "🪵", keywords: ["桌子", "桌", "台"] },
-  "灯笼": { emoji: "🏮", keywords: ["灯笼", "灯", "灯饰"] },
-  "花盆": { emoji: "🪴", keywords: ["花盆", "盆栽", "植物"] },
-  "喷泉": { emoji: "⛲", keywords: ["喷泉", "泉水"] },
-  "吉他": { emoji: "🎸", keywords: ["吉他", "乐器", "吉他"] },
-  "钢琴": { emoji: "🎹", keywords: ["钢琴", "键盘"] },
-  "书架": { emoji: "📚", keywords: ["书架", "书柜", "书"] },
-  "床": { emoji: "🛏️", keywords: ["床", "卧室"] },
-  "沙发": { emoji: "🛋️", keywords: ["沙发", "沙发"] },
-  "地毯": { emoji: "🧶", keywords: ["地毯", "垫子"] },
-  "时钟": { emoji: "🕰️", keywords: ["时钟", "钟"] },
-  "电视": { emoji: "📺", keywords: ["电视", "电视机"] },
-  "冰箱": { emoji: "🧊", keywords: ["冰箱", "冷藏"] },
-  "微波炉": { emoji: "🍳", keywords: ["微波炉", "微波"] },
-  "洗衣机": { emoji: "🧺", keywords: ["洗衣机", "洗衣"] },
-  "壁炉": { emoji: "🔥", keywords: ["壁炉", "火炉"] },
-  "圣诞树": { emoji: "🎄", keywords: ["圣诞树", "圣诞"] },
-  "南瓜灯": { emoji: "🎃", keywords: ["南瓜灯", "南瓜"] },
-  "风车": { emoji: "🌬️", keywords: ["风车"] },
-  "木牌": { emoji: "🪧", keywords: ["木牌", "牌子", "标牌"] },
-  "伞": { emoji: "☂️", keywords: ["伞", "雨伞"] },
-  "船": { emoji: "⛵", keywords: ["船", "小船"] },
-  "滑梯": { emoji: "🛝", keywords: ["滑梯"] },
-  "跷跷板": { emoji: "🪁", keywords: ["跷跷板"] },
-  "荡秋千": { emoji: "🏮", keywords: ["秋千", "荡秋千"] },
+// Fallback keyword table for when LLM is unavailable
+const FURNITURE_FALLBACK: Record<string, string> = {
+  椅子: "🪑", 长椅: "🪑", 凳子: "🪑",
+  桌子: "🪵", 桌: "🪵",
+  灯笼: "🏮", 灯: "💡", 路灯: "🔦",
+  花盆: "🪴", 盆栽: "🪴",
+  喷泉: "⛲", 吉他: "🎸", 钢琴: "🎹",
+  书架: "📚", 床: "🛏️", 沙发: "🛋️",
+  伞: "☂️", 遮阳伞: "☂️",
+  木桶: "🪣", 石头: "🪨",
 };
 
 function extractLocation(text: string): string | null {
@@ -40,24 +24,76 @@ function extractLocation(text: string): string | null {
   return null;
 }
 
-function extractFurniture(text: string): { name: string; emoji: string } | null {
-  for (const [name, data] of Object.entries(FURNITURE_KEYWORDS)) {
-    for (const kw of data.keywords) {
-      if (text.includes(kw)) {
-        return { name, emoji: data.emoji };
+function isRemoveAction(text: string): boolean {
+  const removeKeywords = ["移除", "删除", "去掉", "拿走", "撤掉", "拆除", "不要"];
+  return removeKeywords.some((kw) => text.includes(kw));
+}
+
+type ParsedItem = { name: string; emoji: string };
+
+async function parseFurnitureWithLlm(
+  command: string,
+  location: string
+): Promise<ParsedItem[]> {
+  try {
+    const result = await runLlmTask({
+      taskKey: "decision.light",
+      prompt: `用户想在"${location}"布置场景。用户说："${command}"
+
+请提取用户想放置的物品。每个物品用一行输出，格式：
+【物品】名称【emoji】合适的emoji符号
+
+规则：
+- 如果用户描述了多个物品，每个物品一行
+- 物品名称简短（2-4个字）
+- emoji选择最贴近的
+- 只输出物品行，不要其他文字`,
+    });
+
+    const lines = result.text.split("\n").filter((l) => l.includes("【物品】"));
+    const items: ParsedItem[] = [];
+    for (const line of lines) {
+      const nameMatch = line.match(/【物品】\s*(.+?)【emoji】/);
+      const emojiMatch = line.match(/【emoji】\s*(.+)/);
+      if (nameMatch && emojiMatch) {
+        items.push({
+          name: nameMatch[1].trim(),
+          emoji: emojiMatch[1].trim().slice(0, 2),
+        });
       }
     }
+    return items;
+  } catch {
+    return [];
+  }
+}
+
+function parseFurnitureFallback(text: string): ParsedItem[] {
+  const items: ParsedItem[] = [];
+  for (const [keyword, emoji] of Object.entries(FURNITURE_FALLBACK)) {
+    if (text.includes(keyword)) {
+      items.push({ name: keyword, emoji });
+    }
+  }
+  return items;
+}
+
+async function parseRemoveTarget(command: string): Promise<string | null> {
+  // Try simple keyword match first
+  const locationItems = Object.values(store.furniture).flat();
+  for (const item of locationItems) {
+    if (command.includes(item.name)) return item.name;
+  }
+  // Try fuzzy: any furniture keyword
+  for (const keyword of Object.keys(FURNITURE_FALLBACK)) {
+    if (command.includes(keyword)) return keyword;
   }
   return null;
 }
 
-function isRemoveAction(text: string): boolean {
-  const removeKeywords = ["移除", "删除", "去掉", "拿走", "撤掉", "拆除", "不要", "移除"];
-  return removeKeywords.some((kw) => text.includes(kw));
-}
-
 export async function POST(request: NextRequest) {
   try {
+    await hydrateStore();
     const body = await request.json();
     const { command } = body;
 
@@ -71,16 +107,19 @@ export async function POST(request: NextRequest) {
     const location = extractLocation(command);
     if (!location) {
       return NextResponse.json(
-        { error: "未识别到地点，请说出具体位置（如：广场、海滩、花园）" },
+        {
+          error:
+            "未识别到地点，请说出具体位置（如：广场、海滩、花园、咖啡摊）",
+        },
         { status: 400 }
       );
     }
 
     const isRemove = isRemoveAction(command);
-    const furniture = extractFurniture(command);
 
     if (isRemove) {
-      if (!furniture) {
+      const targetName = await parseRemoveTarget(command);
+      if (!targetName) {
         return NextResponse.json(
           { error: "未识别到要移除的物品" },
           { status: 400 }
@@ -88,31 +127,39 @@ export async function POST(request: NextRequest) {
       }
 
       const locationFurniture = store.furniture[location] || [];
-      const index = locationFurniture.findIndex((f) => f.name === furniture.name);
+      const index = locationFurniture.findIndex((f) =>
+        f.name.includes(targetName) || targetName.includes(f.name)
+      );
 
       if (index === -1) {
         return NextResponse.json(
-          { error: `${location}没有${furniture.name}` },
+          { error: `${location}没有"${targetName}"` },
           { status: 400 }
         );
       }
 
-      locationFurniture.splice(index, 1);
+      const removed = locationFurniture.splice(index, 1)[0];
       store.furniture[location] = locationFurniture;
       await flushStore();
 
       return NextResponse.json({
         success: true,
-        message: `已从${location}移除${furniture.emoji}${furniture.name}`,
+        message: `已从${location}移除${removed.emoji}${removed.name}`,
         location,
         action: "remove",
-        furniture: furniture.name,
+        furniture: removed.name,
       });
     }
 
-    if (!furniture) {
+    // Add items — try LLM first, fallback to keywords
+    let items = await parseFurnitureWithLlm(command, location);
+    if (items.length === 0) {
+      items = parseFurnitureFallback(command);
+    }
+
+    if (items.length === 0) {
       return NextResponse.json(
-        { error: "未识别到要添加的物品（支持的物品：长椅、桌子、灯笼、花盆、喷泉、吉他、钢琴、床、沙发等）" },
+        { error: "未能识别要放置的物品，请试试更具体的描述" },
         { status: 400 }
       );
     }
@@ -121,30 +168,26 @@ export async function POST(request: NextRequest) {
       store.furniture[location] = [];
     }
 
-    const exists = store.furniture[location].some((f) => f.name === furniture.name);
-    if (exists) {
-      return NextResponse.json(
-        { error: `${location}已经有${furniture.emoji}${furniture.name}了` },
-        { status: 400 }
-      );
+    const added: string[] = [];
+    for (const item of items) {
+      const newFurniture = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        name: item.name,
+        emoji: item.emoji,
+        addedAt: new Date().toISOString(),
+      };
+      store.furniture[location].push(newFurniture);
+      added.push(`${item.emoji}${item.name}`);
     }
 
-    const newFurniture = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-      name: furniture.name,
-      emoji: furniture.emoji,
-      addedAt: new Date().toISOString(),
-    };
-
-    store.furniture[location].push(newFurniture);
     await flushStore();
 
     return NextResponse.json({
       success: true,
-      message: `已在${location}放置${furniture.emoji}${furniture.name}`,
+      message: `已在${location}放置${added.join("、")}`,
       location,
       action: "add",
-      furniture: newFurniture,
+      itemCount: items.length,
     });
   } catch (error) {
     console.error("Modify API error:", error);
@@ -156,6 +199,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
+  await hydrateStore();
   return NextResponse.json({
     locations: Object.entries(store.furniture).map(([location, items]) => ({
       location,
