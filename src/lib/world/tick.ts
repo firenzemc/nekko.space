@@ -1,5 +1,5 @@
 import { flushStore, hydrateStore, store } from "@/lib/core/store";
-import { deriveTimeSlot, nextWeather } from "@/lib/world/clock";
+import { deriveTimeSlot, getIslandDate, nextSeasonalWeather } from "@/lib/world/clock";
 import { runVillagerTurn } from "@/lib/agents/villager-agent";
 import { planDailyPlot } from "@/lib/agents/director-agent";
 import { generateDailyReport } from "@/lib/agents/reporter-agent";
@@ -66,11 +66,12 @@ const maybeSendVillagerMail = async () => {
 export const runWorldTick = async () => {
   await hydrateStore();
 
-  const now = new Date();
-  const nowIso = now.toISOString();
+  const island = getIslandDate();
+  const nowIso = island.iso;
 
-  store.world.timeSlot = deriveTimeSlot(now.getHours());
-  store.world.weather = nextWeather();
+  store.world.dayKey = island.dayKey;
+  store.world.timeSlot = deriveTimeSlot(island.hour);
+  store.world.weather = nextSeasonalWeather(island.month);
   store.world.lastUpdatedAt = nowIso;
 
   const villagers = await Promise.all(

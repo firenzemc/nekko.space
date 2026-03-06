@@ -8,7 +8,7 @@ import type {
   VillagerRelationship,
   WorldState,
 } from "@/lib/core/types";
-import { deriveTimeSlot, nextWeather } from "@/lib/world/clock";
+import { deriveTimeSlot, getIslandDate, nextSeasonalWeather } from "@/lib/world/clock";
 import { loadPersistedState, persistState } from "@/lib/core/persistence";
 import type { LocationFurniture } from "@/lib/data/locations";
 import { VILLAGER_BIOS } from "@/lib/data/villager-profiles";
@@ -52,15 +52,15 @@ const buildInitialRelationships = (): VillagerRelationship[] => {
 };
 
 const createInitialState = (): MemoryStore => {
-  const now = new Date();
+  const island = getIslandDate();
   return {
     world: {
-      dayKey: now.toISOString().slice(0, 10),
-      timeSlot: deriveTimeSlot(now.getHours()),
-      weather: nextWeather(),
+      dayKey: island.dayKey,
+      timeSlot: deriveTimeSlot(island.hour),
+      weather: nextSeasonalWeather(island.month),
       headline: "岛屿一切安好，居民们正在开始新一天。",
       villagers: DEFAULT_VILLAGERS,
-      lastUpdatedAt: now.toISOString(),
+      lastUpdatedAt: island.iso,
     },
     events: [],
     reports: [],
@@ -68,7 +68,7 @@ const createInitialState = (): MemoryStore => {
     affinities: DEFAULT_VILLAGERS.map((villager) => ({
       villagerId: villager.id,
       score: 60,
-      lastInteractionAt: now.toISOString(),
+      lastInteractionAt: island.iso,
     })),
     tickLogs: [],
     furniture: {},
